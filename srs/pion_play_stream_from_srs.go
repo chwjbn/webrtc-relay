@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -34,25 +33,21 @@ type srsPlayResponse struct {
 }
 
 type PionSrsPlayConnector struct {
-	srsApiHost     string
-	srsAddr        *net.TCPAddr
-	app            string //live / vod ...
-	streamName     string //show / tv / sport111
+	srsApiHost   string
+	srsWebRTCUrl string
+
 	tid            string //log trace
 	peerConnection *webrtc.PeerConnection
 	OnStateChange  func(RTCTransportState)
 	OnRtp          func(cid int, pkg *rtp.Packet)
 }
 
-func NewPionSrsPlayConnector(srsApiHost string, srsAddr string, app string, streamName string) (c *PionSrsPlayConnector, e error) {
+func NewPionSrsPlayConnector(srsApiHost string, srsWebRTCUrl string) (c *PionSrsPlayConnector, e error) {
 	c = &PionSrsPlayConnector{
-		srsApiHost: srsApiHost,
-		app:        app,
-		streamName: streamName,
+		srsApiHost:   srsApiHost,
+		srsWebRTCUrl: srsWebRTCUrl,
 	}
-	if c.srsAddr, e = net.ResolveTCPAddr("tcp4", srsAddr); e != nil {
-		return
-	}
+
 	r := make([]byte, 8)
 	if _, e = rand.Read(r); e != nil {
 		return
@@ -156,7 +151,7 @@ func (c *PionSrsPlayConnector) Start() (startDone chan error) {
 		}
 
 		srsApi := c.srsApiHost + "/rtc/v1/play/"
-		surl := "webrtc://" + c.srsAddr.String() + "/" + c.app + "/" + c.streamName
+		surl := c.srsWebRTCUrl
 		playreq := srsPlayRequest{
 			Api:       srsApi,
 			Tid:       c.tid,

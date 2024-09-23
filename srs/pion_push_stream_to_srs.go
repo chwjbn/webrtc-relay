@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"net"
 	"net/http"
 	"time"
 
@@ -108,10 +107,9 @@ func (t *rtcTrack) loopRecvRtcp() {
 }
 
 type PionSrsPushConnector struct {
-	srsApiHost     string
-	srsAddr        *net.TCPAddr
-	app            string //live / vod ...
-	streamName     string //show / tv / sport111
+	srsApiHost   string
+	srsWebRTCUrl string
+
 	tid            string //log trace
 	peerConnection *webrtc.PeerConnection
 	tracks         map[int]*rtcTrack
@@ -119,17 +117,14 @@ type PionSrsPushConnector struct {
 	OnStateChange  func(RTCTransportState)
 }
 
-func NewPionSrsPushConnector(srsApiHost string, srsAddr string, app string, streamName string) (c *PionSrsPushConnector, e error) {
+func NewPionSrsPushConnector(srsApiHost string, srsWebRTCUrl string) (c *PionSrsPushConnector, e error) {
 	c = &PionSrsPushConnector{
-		srsApiHost:  srsApiHost,
-		app:         app,
-		streamName:  streamName,
-		tracks:      make(map[int]*rtcTrack),
-		nextTrackId: 0,
+		srsApiHost:   srsApiHost,
+		srsWebRTCUrl: srsWebRTCUrl,
+		tracks:       make(map[int]*rtcTrack),
+		nextTrackId:  0,
 	}
-	if c.srsAddr, e = net.ResolveTCPAddr("tcp4", srsAddr); e != nil {
-		return
-	}
+
 	r := make([]byte, 8)
 	if _, e = rand.Read(r); e != nil {
 		return
@@ -208,7 +203,7 @@ func (c *PionSrsPushConnector) Start() error {
 
 	go func() {
 		srsApi := c.srsApiHost + "/rtc/v1/publish/"
-		surl := "webrtc://" + c.srsAddr.String() + "/" + c.app + "/" + c.streamName
+		surl := c.srsWebRTCUrl
 		pushreq := srsPushRequest{
 			Api:       srsApi,
 			Tid:       c.tid,
