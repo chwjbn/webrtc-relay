@@ -108,7 +108,7 @@ func (t *rtcTrack) loopRecvRtcp() {
 }
 
 type PionSrsPushConnector struct {
-	srsApiProtocol string
+	srsApiHost     string
 	srsAddr        *net.TCPAddr
 	app            string //live / vod ...
 	streamName     string //show / tv / sport111
@@ -119,13 +119,13 @@ type PionSrsPushConnector struct {
 	OnStateChange  func(RTCTransportState)
 }
 
-func NewPionSrsPushConnector(srsApiProtocol string, srsAddr string, app string, streamName string) (c *PionSrsPushConnector, e error) {
+func NewPionSrsPushConnector(srsApiHost string, srsAddr string, app string, streamName string) (c *PionSrsPushConnector, e error) {
 	c = &PionSrsPushConnector{
-		srsApiProtocol: srsApiProtocol,
-		app:            app,
-		streamName:     streamName,
-		tracks:         make(map[int]*rtcTrack),
-		nextTrackId:    0,
+		srsApiHost:  srsApiHost,
+		app:         app,
+		streamName:  streamName,
+		tracks:      make(map[int]*rtcTrack),
+		nextTrackId: 0,
 	}
 	if c.srsAddr, e = net.ResolveTCPAddr("tcp4", srsAddr); e != nil {
 		return
@@ -207,7 +207,7 @@ func (c *PionSrsPushConnector) Start() error {
 	}
 
 	go func() {
-		srsApi := c.srsApiProtocol + "://" + c.srsAddr.String() + "/rtc/v1/publish/"
+		srsApi := c.srsApiHost + "/rtc/v1/publish/"
 		surl := "webrtc://" + c.srsAddr.String() + "/" + c.app + "/" + c.streamName
 		pushreq := srsPushRequest{
 			Api:       srsApi,

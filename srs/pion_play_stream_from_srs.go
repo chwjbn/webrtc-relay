@@ -34,7 +34,7 @@ type srsPlayResponse struct {
 }
 
 type PionSrsPlayConnector struct {
-	srsApiProtocol string
+	srsApiHost     string
 	srsAddr        *net.TCPAddr
 	app            string //live / vod ...
 	streamName     string //show / tv / sport111
@@ -44,11 +44,11 @@ type PionSrsPlayConnector struct {
 	OnRtp          func(cid int, pkg *rtp.Packet)
 }
 
-func NewPionSrsPlayConnector(srsApiProtocol string, srsAddr string, app string, streamName string) (c *PionSrsPlayConnector, e error) {
+func NewPionSrsPlayConnector(srsApiHost string, srsAddr string, app string, streamName string) (c *PionSrsPlayConnector, e error) {
 	c = &PionSrsPlayConnector{
-		srsApiProtocol: srsApiProtocol,
-		app:            app,
-		streamName:     streamName,
+		srsApiHost: srsApiHost,
+		app:        app,
+		streamName: streamName,
 	}
 	if c.srsAddr, e = net.ResolveTCPAddr("tcp4", srsAddr); e != nil {
 		return
@@ -155,7 +155,7 @@ func (c *PionSrsPlayConnector) Start() (startDone chan error) {
 			return
 		}
 
-		srsApi := c.srsApiProtocol + "://" + c.srsAddr.String() + "/rtc/v1/play/"
+		srsApi := c.srsApiHost + "/rtc/v1/play/"
 		surl := "webrtc://" + c.srsAddr.String() + "/" + c.app + "/" + c.streamName
 		playreq := srsPlayRequest{
 			Api:       srsApi,
